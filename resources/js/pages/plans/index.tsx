@@ -138,7 +138,7 @@ export default function Plans({ packages = [] }: { packages: InternetPackage[] }
                                         id="category"
                                         value={data.category}
                                         onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setData('category', e.target.value)}
-                                        className="w-full rounded-md border border-input px-3 py-2"
+                                        className="w-full rounded-md border border-input px-3 py-2 bg-background text-foreground [&>option]:bg-background [&>option]:text-foreground"
                                     >
                                         <option value="fiber">Fiber</option>
                                         <option value="wireless">Wireless</option>
@@ -151,7 +151,7 @@ export default function Plans({ packages = [] }: { packages: InternetPackage[] }
                                         id="status"
                                         value={data.status}
                                         onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setData('status', e.target.value)}
-                                        className="w-full rounded-md border border-input px-3 py-2"
+                                        className="w-full rounded-md border border-input px-3 py-2 bg-background text-foreground [&>option]:bg-background [&>option]:text-foreground"
                                     >
                                         <option value="active">Active</option>
                                         <option value="inactive">Inactive</option>
