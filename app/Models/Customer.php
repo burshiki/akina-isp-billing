@@ -26,6 +26,7 @@ class Customer extends Model
         'payment_type',
         'due_date',
         'is_tax_active',
+        'coverage_id',
     ];
 
     protected $hidden = [
@@ -57,5 +58,15 @@ class Customer extends Model
     public function internetPackage(): BelongsTo
     {
         return $this->belongsTo(InternetPackage::class);
+    }
+
+    public function plan()
+    {
+        return $this->belongsTo(InternetPackage::class, 'plan_id');
+    }
+
+    public function coverage()
+    {
+        return $this->belongsTo(Coverage::class);
     }
 }
