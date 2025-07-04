@@ -27,10 +27,18 @@ interface Customer {
     due_date?: number;
     is_tax_active: boolean;
     created_at: string;
+    coverage_id?: number;
+    coverage_name?: string;
 }
 
 interface Plan {
     id: number;
+    name: string;
+}
+
+interface Coverage {
+    id: number;
+    area_code: string;
     name: string;
 }
 
@@ -53,6 +61,8 @@ type FormData = {
     payment_type: PaymentType;
     due_date: string;
     is_tax_active: boolean;
+    coverage_id: string;
+    [key: string]: string | boolean | CustomerType | IdCardType | '';
 }
 
 const breadcrumbs: BreadcrumbItem[] = [
@@ -62,26 +72,31 @@ const breadcrumbs: BreadcrumbItem[] = [
     },
 ];
 
-export default function Customers({ customers = [], plans = [] }: { customers: Customer[]; plans: Plan[] }) {
+export default function Customers({ customers = [], plans = [], coverages = [] }: { 
+    customers: Customer[]; 
+    plans: Plan[];
+    coverages: Coverage[];
+}) {
     const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
     const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
     const [customerToDelete, setCustomerToDelete] = useState<Customer | null>(null);
     const [editingCustomer, setEditingCustomer] = useState<Customer | null>(null);
 
-    const { data, setData, post, put, processing, reset, errors } = useForm({
+    const { data, setData, post, put, processing, reset, errors } = useForm<FormData>({
         name: '',
         email: '',
         phone: '',
         address: '',
-        customer_type: 'public' as const,
-        id_card_type: '' as const,
+        customer_type: 'public',
+        id_card_type: '',
         id_number: '',
         remarks: '',
         plan_id: '',
-        status: 'active' as const,
-        payment_type: 'postpaid' as const,
+        status: 'active',
+        payment_type: 'postpaid',
         due_date: '',
         is_tax_active: false,
+        coverage_id: '',
     });
 
     const handleSubmit = (e: React.FormEvent) => {
@@ -114,13 +129,14 @@ export default function Customers({ customers = [], plans = [] }: { customers: C
             customer_type: customer.customer_type,
             id_card_type: customer.id_card_type,
             id_number: customer.id_number,
-            remarks: customer.remarks,
+            remarks: customer.remarks || '',
             plan_id: customer.plan_id.toString(),
             status: customer.status,
             payment_type: customer.payment_type,
-            due_date: customer.due_date?.toString(),
+            due_date: customer.due_date?.toString() || '',
             is_tax_active: customer.is_tax_active,
-        });
+            coverage_id: customer.coverage_id?.toString() || '',
+        } as FormData);
         setIsAddDialogOpen(true);
     };
 
@@ -273,6 +289,26 @@ export default function Customers({ customers = [], plans = [] }: { customers: C
                                         {errors.plan_id && <p className="text-sm text-red-500 mt-1">{errors.plan_id}</p>}
                                     </div>
                                     <div>
+                                        <Label htmlFor="coverage_id">Coverage Area</Label>
+                                        <select
+                                            id="coverage_id"
+                                            value={data.coverage_id}
+                                            onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setData('coverage_id', e.target.value)}
+                                            className="w-full rounded-md border border-input px-3 py-2 bg-background text-foreground [&>option]:bg-background [&>option]:text-foreground"
+                                        >
+                                            <option value="">Select coverage area</option>
+                                            {coverages.map((coverage) => (
+                                                <option key={coverage.id} value={coverage.id}>
+                                                    {coverage.area_code} - {coverage.name}
+                                                </option>
+                                            ))}
+                                        </select>
+                                        {errors.coverage_id && <p className="text-sm text-red-500 mt-1">{errors.coverage_id}</p>}
+                                    </div>
+                                </div>
+
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div>
                                         <Label htmlFor="payment_type">Payment Type</Label>
                                         <select
                                             id="payment_type"
@@ -410,6 +446,7 @@ export default function Customers({ customers = [], plans = [] }: { customers: C
                                                 <th className="text-left py-3 px-4">Phone</th>
                                                 <th className="text-left py-3 px-4">Type</th>
                                                 <th className="text-left py-3 px-4">Plan</th>
+                                                <th className="text-left py-3 px-4">Coverage</th>
                                                 <th className="text-left py-3 px-4">Payment</th>
                                                 <th className="text-left py-3 px-4">Status</th>
                                                 <th className="text-right py-3 px-4">Actions</th>
@@ -424,6 +461,7 @@ export default function Customers({ customers = [], plans = [] }: { customers: C
                                                     <td className="py-3 px-4">{customer.phone}</td>
                                                     <td className="py-3 px-4 capitalize">{customer.customer_type}</td>
                                                     <td className="py-3 px-4">{customer.plan_name}</td>
+                                                    <td className="py-3 px-4">{customer.coverage_name}</td>
                                                     <td className="py-3 px-4 capitalize">{customer.payment_type}</td>
                                                     <td className="py-3 px-4">
                                                         <span

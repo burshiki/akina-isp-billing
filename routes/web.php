@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\InternetPackageController;
 use App\Http\Controllers\CustomerController;
+use App\Http\Controllers\CoverageController;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 
@@ -19,6 +20,11 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::post('customers', [CustomerController::class, 'store'])->name('customers.store');
     Route::put('customers/{customer}', [CustomerController::class, 'update'])->name('customers.update');
     Route::delete('customers/{customer}', [CustomerController::class, 'destroy'])->name('customers.destroy');
+
+    Route::get('/coverage', [CoverageController::class, 'index'])->name('coverage.index');
+    Route::post('/coverage', [CoverageController::class, 'store'])->name('coverage.store');
+    Route::put('/coverage/{coverage}', [CoverageController::class, 'update'])->name('coverage.update');
+    Route::delete('/coverage/{coverage}', [CoverageController::class, 'destroy'])->name('coverage.destroy');
 });
 
 require __DIR__.'/settings.php';

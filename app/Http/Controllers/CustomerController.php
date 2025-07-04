@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Customer;
+use App\Models\Coverage;
 use App\Models\InternetPackage;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -12,7 +13,7 @@ class CustomerController extends Controller
     public function index()
     {
         return Inertia::render('customers/index', [
-            'customers' => Customer::with('internetPackage')->get()->map(function ($customer) {
+            'customers' => Customer::with(['internetPackage', 'coverage'])->get()->map(function ($customer) {
                 return [
                     'id' => $customer->id,
                     'account_no' => $customer->account_no,
@@ -31,12 +32,21 @@ class CustomerController extends Controller
                     'due_date' => $customer->due_date,
                     'is_tax_active' => $customer->is_tax_active,
                     'created_at' => $customer->created_at->format('Y-m-d'),
+                    'coverage_id' => $customer->coverage_id,
+                    'coverage_name' => $customer->coverage?->name,
                 ];
             }),
             'plans' => InternetPackage::where('status', 'active')->get()->map(function ($plan) {
                 return [
                     'id' => $plan->id,
                     'name' => $plan->name,
+                ];
+            }),
+            'coverages' => Coverage::orderBy('area_code')->get()->map(function ($coverage) {
+                return [
+                    'id' => $coverage->id,
+                    'area_code' => $coverage->area_code,
+                    'name' => $coverage->name,
                 ];
             }),
         ]);
@@ -58,6 +68,7 @@ class CustomerController extends Controller
             'payment_type' => 'required|in:postpaid,prepaid',
             'due_date' => 'required_if:payment_type,postpaid|nullable|integer|min:1|max:31',
             'is_tax_active' => 'required|boolean',
+            'coverage_id' => 'required|exists:coverages,id',
         ]);
 
         Customer::create([
@@ -74,6 +85,7 @@ class CustomerController extends Controller
             'payment_type' => $validated['payment_type'],
             'due_date' => $validated['due_date'],
             'is_tax_active' => $validated['is_tax_active'],
+            'coverage_id' => $validated['coverage_id'],
         ]);
 
         return redirect()->back();
@@ -95,6 +107,7 @@ class CustomerController extends Controller
             'payment_type' => 'required|in:postpaid,prepaid',
             'due_date' => 'required_if:payment_type,postpaid|nullable|integer|min:1|max:31',
             'is_tax_active' => 'required|boolean',
+            'coverage_id' => 'required|exists:coverages,id',
         ]);
 
         $customer->update([
@@ -111,6 +124,7 @@ class CustomerController extends Controller
             'payment_type' => $validated['payment_type'],
             'due_date' => $validated['due_date'],
             'is_tax_active' => $validated['is_tax_active'],
+            'coverage_id' => $validated['coverage_id'],
         ]);
 
         return redirect()->back();
