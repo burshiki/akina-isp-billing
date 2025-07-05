@@ -23,7 +23,7 @@ return new class extends Migration
             $table->enum('id_card_type', ['umid', 'sss', 'sim', 'passport', 'pag-ibig']);
             $table->string('id_number');
             $table->text('remarks')->nullable();
-            $table->foreignId('internet_package_id')->constrained('internet_packages');
+            $table->foreignId('plan_id')->constrained('internet_packages');
             $table->enum('status', ['active', 'inactive'])->default('active');
             $table->enum('payment_type', ['postpaid', 'prepaid'])->default('postpaid');
             $table->integer('due_date')->nullable(); // Day of the month

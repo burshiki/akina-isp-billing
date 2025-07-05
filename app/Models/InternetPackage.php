@@ -13,6 +13,7 @@ class InternetPackage extends Model
         'status',
         'remarks',
         'image_path',
+        'mikrotik_profile',
     ];
 
     protected $casts = [

@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Facades\Hash;
 
 class Customer extends Model
@@ -12,6 +13,7 @@ class Customer extends Model
     use HasFactory;
 
     protected $fillable = [
+        'account_no',
         'name',
         'email',
         'password',
@@ -21,12 +23,13 @@ class Customer extends Model
         'id_card_type',
         'id_number',
         'remarks',
-        'internet_package_id',
+        'plan_id',
         'status',
         'payment_type',
         'due_date',
         'is_tax_active',
         'coverage_id',
+        'activation_date',
     ];
 
     protected $hidden = [
@@ -35,6 +38,7 @@ class Customer extends Model
 
     protected $casts = [
         'is_tax_active' => 'boolean',
+        'activation_date' => 'date',
         'due_date' => 'integer',
     ];
 
@@ -60,12 +64,17 @@ class Customer extends Model
         return $this->belongsTo(InternetPackage::class);
     }
 
-    public function plan()
+    public function plan(): BelongsTo
     {
         return $this->belongsTo(InternetPackage::class, 'plan_id');
     }
 
-    public function coverage()
+    public function invoices(): HasMany
+    {
+        return $this->hasMany(Invoice::class);
+    }
+
+    public function coverage(): BelongsTo
     {
         return $this->belongsTo(Coverage::class);
     }

@@ -18,6 +18,7 @@ interface InternetPackage {
     status: 'active' | 'inactive';
     remarks?: string;
     image_path?: string;
+    mikrotik_profile?: string;
 }
 
 const breadcrumbs: BreadcrumbItem[] = [
@@ -27,7 +28,7 @@ const breadcrumbs: BreadcrumbItem[] = [
     },
 ];
 
-export default function Plans({ packages = [] }: { packages: InternetPackage[] }) {
+export default function Plans({ packages = [], mikrotikProfiles = [] }: { packages: InternetPackage[]; mikrotikProfiles: string[]; }) {
     const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
     const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
     const [packageToDelete, setPackageToDelete] = useState<InternetPackage | null>(null);
@@ -40,6 +41,7 @@ export default function Plans({ packages = [] }: { packages: InternetPackage[] }
         status: 'active',
         remarks: '',
         image: null as File | null,
+        mikrotik_profile: '',
     });
 
     const handleSubmit = (e: React.FormEvent) => {
@@ -71,6 +73,7 @@ export default function Plans({ packages = [] }: { packages: InternetPackage[] }
             status: pkg.status,
             remarks: pkg.remarks || '',
             image: null,
+            mikrotik_profile: pkg.mikrotik_profile || '',
         });
         setIsAddDialogOpen(true);
     };
@@ -121,6 +124,23 @@ export default function Plans({ packages = [] }: { packages: InternetPackage[] }
                                         onChange={e => setData('name', e.target.value)}
                                     />
                                     {errors.name && <p className="text-sm text-red-500 mt-1">{errors.name}</p>}
+                                </div>
+                                <div>
+                                    <Label htmlFor="mikrotik_profile">MikroTik Profile</Label>
+                                    <select
+                                        id="mikrotik_profile"
+                                        value={data.mikrotik_profile}
+                                        onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setData('mikrotik_profile', e.target.value)}
+                                        className="w-full rounded-md border border-input px-3 py-2 bg-background text-foreground [&>option]:bg-background [&>option]:text-foreground"
+                                    >
+                                        <option value="">Select a profile</option>
+                                        {mikrotikProfiles.map((profile) => (
+                                            <option key={profile} value={profile}>
+                                                {profile}
+                                            </option>
+                                        ))}
+                                    </select>
+                                    {errors.mikrotik_profile && <p className="text-sm text-red-500 mt-1">{errors.mikrotik_profile}</p>}
                                 </div>
                                 <div>
                                     <Label htmlFor="price">Price (₱)</Label>
@@ -240,6 +260,7 @@ export default function Plans({ packages = [] }: { packages: InternetPackage[] }
                                         <thead>
                                             <tr className="border-b">
                                                 <th className="text-left py-3 px-4">Name</th>
+                                                <th className="text-left py-3 px-4">MikroTik Profile</th>
                                                 <th className="text-left py-3 px-4">Price</th>
                                                 <th className="text-left py-3 px-4">Category</th>
                                                 <th className="text-left py-3 px-4">Status</th>
@@ -251,6 +272,7 @@ export default function Plans({ packages = [] }: { packages: InternetPackage[] }
                                             {packages.map((pkg) => (
                                                 <tr key={pkg.id} className="border-b">
                                                     <td className="py-3 px-4">{pkg.name}</td>
+                                                    <td className="py-3 px-4">{pkg.mikrotik_profile}</td>
                                                     <td className="py-3 px-4">₱{pkg.price.toLocaleString()}</td>
                                                     <td className="py-3 px-4 capitalize">{pkg.category}</td>
                                                     <td className="py-3 px-4">
@@ -295,4 +317,4 @@ export default function Plans({ packages = [] }: { packages: InternetPackage[] }
             </div>
         </AppLayout>
     );
-} 
+}  

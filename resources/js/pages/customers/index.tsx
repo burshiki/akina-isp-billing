@@ -6,8 +6,8 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from '@/components/ui/dialog';
-import { Pencil, Trash2, AlertTriangle } from 'lucide-react';
-import { useState } from 'react';
+import { Pencil, Trash2, AlertTriangle, CheckCircle } from 'lucide-react';
+import { useState, useEffect } from 'react';
 
 interface Customer {
     id: number;
@@ -29,6 +29,7 @@ interface Customer {
     created_at: string;
     coverage_id?: number;
     coverage_name?: string;
+    activation_date: string;
 }
 
 interface Plan {
@@ -40,6 +41,11 @@ interface Coverage {
     id: number;
     area_code: string;
     name: string;
+}
+
+interface FlashMessage {
+    success?: string;
+    error?: string;
 }
 
 type CustomerType = 'public' | 'corporate' | 'government';
@@ -62,6 +68,7 @@ type FormData = {
     due_date: string;
     is_tax_active: boolean;
     coverage_id: string;
+    activation_date: string;
     [key: string]: string | boolean | CustomerType | IdCardType | '';
 }
 
@@ -72,15 +79,23 @@ const breadcrumbs: BreadcrumbItem[] = [
     },
 ];
 
-export default function Customers({ customers = [], plans = [], coverages = [] }: { 
+export default function Customers({ customers = [], plans = [], coverages = [], flash }: { 
     customers: Customer[]; 
     plans: Plan[];
     coverages: Coverage[];
+    flash: FlashMessage;
 }) {
     const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
     const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
     const [customerToDelete, setCustomerToDelete] = useState<Customer | null>(null);
     const [editingCustomer, setEditingCustomer] = useState<Customer | null>(null);
+    const [isSuccessModalOpen, setIsSuccessModalOpen] = useState(false);
+
+    useEffect(() => {
+        if (flash?.success) {
+            setIsSuccessModalOpen(true);
+        }
+    }, [flash]);
 
     const { data, setData, post, put, processing, reset, errors } = useForm<FormData>({
         name: '',
@@ -97,6 +112,7 @@ export default function Customers({ customers = [], plans = [], coverages = [] }
         due_date: '',
         is_tax_active: false,
         coverage_id: '',
+        activation_date: new Date().toISOString().split('T')[0],
     });
 
     const handleSubmit = (e: React.FormEvent) => {
@@ -130,12 +146,13 @@ export default function Customers({ customers = [], plans = [], coverages = [] }
             id_card_type: customer.id_card_type,
             id_number: customer.id_number,
             remarks: customer.remarks || '',
-            plan_id: customer.plan_id.toString(),
+            plan_id: customer.plan_id?.toString() || '',
             status: customer.status,
             payment_type: customer.payment_type,
             due_date: customer.due_date?.toString() || '',
             is_tax_active: customer.is_tax_active,
             coverage_id: customer.coverage_id?.toString() || '',
+            activation_date: customer.activation_date || new Date().toISOString().split('T')[0],
         } as FormData);
         setIsAddDialogOpen(true);
     };
@@ -309,6 +326,18 @@ export default function Customers({ customers = [], plans = [], coverages = [] }
 
                                 <div className="grid grid-cols-2 gap-4">
                                     <div>
+                                        <Label htmlFor="activation_date">Activation Date</Label>
+                                        <Input
+                                            id="activation_date"
+                                            type="date"
+                                            value={data.activation_date}
+                                            onChange={e => setData('activation_date', e.target.value)}
+                                        />
+                                        {errors.activation_date && (
+                                            <p className="text-sm text-red-500 mt-1">{errors.activation_date}</p>
+                                        )}
+                                    </div>
+                                    <div>
                                         <Label htmlFor="payment_type">Payment Type</Label>
                                         <select
                                             id="payment_type"
@@ -320,7 +349,9 @@ export default function Customers({ customers = [], plans = [], coverages = [] }
                                             <option value="postpaid">Postpaid</option>
                                             <option value="prepaid">Prepaid</option>
                                         </select>
-                                        {errors.payment_type && <p className="text-sm text-red-500 mt-1">{errors.payment_type}</p>}
+                                        {errors.payment_type && (
+                                            <p className="text-sm text-red-500 mt-1">{errors.payment_type}</p>
+                                        )}
                                     </div>
                                 </div>
 
@@ -424,6 +455,22 @@ export default function Customers({ customers = [], plans = [], coverages = [] }
                             </DialogFooter>
                         </DialogContent>
                     </Dialog>
+                    <Dialog open={isSuccessModalOpen} onOpenChange={setIsSuccessModalOpen}>
+                        <DialogContent>
+                            <DialogHeader>
+                                <DialogTitle className="flex items-center gap-2 text-green-600">
+                                    <CheckCircle className="h-5 w-5" />
+                                    Success
+                                </DialogTitle>
+                                <DialogDescription>
+                                    {flash?.success}
+                                </DialogDescription>
+                            </DialogHeader>
+                            <DialogFooter>
+                                <Button onClick={() => setIsSuccessModalOpen(false)}>Close</Button>
+                            </DialogFooter>
+                        </DialogContent>
+                    </Dialog>
                 </div>
 
                 <div className="grid gap-6">
@@ -448,6 +495,7 @@ export default function Customers({ customers = [], plans = [], coverages = [] }
                                                 <th className="text-left py-3 px-4">Plan</th>
                                                 <th className="text-left py-3 px-4">Coverage</th>
                                                 <th className="text-left py-3 px-4">Payment</th>
+                                                <th className="text-left py-3 px-4">Activation</th>
                                                 <th className="text-left py-3 px-4">Status</th>
                                                 <th className="text-right py-3 px-4">Actions</th>
                                             </tr>
@@ -463,6 +511,7 @@ export default function Customers({ customers = [], plans = [], coverages = [] }
                                                     <td className="py-3 px-4">{customer.plan_name}</td>
                                                     <td className="py-3 px-4">{customer.coverage_name}</td>
                                                     <td className="py-3 px-4 capitalize">{customer.payment_type}</td>
+                                                    <td className="py-3 px-4">{customer.activation_date}</td>
                                                     <td className="py-3 px-4">
                                                         <span
                                                             className={`inline-block px-2 py-1 rounded text-xs ${
@@ -482,6 +531,13 @@ export default function Customers({ customers = [], plans = [], coverages = [] }
                                                                 onClick={() => handleEdit(customer)}
                                                             >
                                                                 <Pencil className="h-4 w-4" />
+                                                            </Button>
+                                                            <Button
+                                                                variant="ghost"
+                                                                size="icon"
+                                                                onClick={() => router.post(route('customers.sync', customer.id))}
+                                                            >
+                                                                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-arrow-right-left"><path d="m16 3 4 4-4 4"/><path d="M20 7H4"/><path d="m8 21-4-4 4-4"/><path d="M4 17h16"/></svg>
                                                             </Button>
                                                             <Button
                                                                 variant="ghost"

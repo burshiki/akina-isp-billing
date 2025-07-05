@@ -5,15 +5,30 @@ namespace App\Http\Controllers;
 use App\Models\Customer;
 use App\Models\Coverage;
 use App\Models\InternetPackage;
+use App\Services\MikrotikService;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
+use Illuminate\Support\Facades\Log;
 
 class CustomerController extends Controller
 {
+    public function syncToMikrotik(Customer $customer, MikrotikService $mikrotikService)
+    {
+        Log::info("Attempting to sync customer to MikroTik: ID {$customer->id}, Name: {$customer->name}");
+        try {
+            $mikrotikService->createOrEnableSecret($customer);
+            Log::info("Customer synced to MikroTik successfully: ID {$customer->id}");
+            return redirect()->back()->with('success', 'Customer synced to MikroTik successfully.');
+        } catch (\Exception $e) {
+            Log::error("Failed to sync customer to MikroTik: ID {$customer->id}, Error: {$e->getMessage()}");
+            return redirect()->back()->with('error', $e->getMessage());
+        }
+    }
+
     public function index()
     {
         return Inertia::render('customers/index', [
-            'customers' => Customer::with(['internetPackage', 'coverage'])->get()->map(function ($customer) {
+            'customers' => Customer::with(['plan', 'coverage'])->get()->map(function ($customer) {
                 return [
                     'id' => $customer->id,
                     'account_no' => $customer->account_no,
@@ -25,8 +40,8 @@ class CustomerController extends Controller
                     'id_card_type' => $customer->id_card_type,
                     'id_number' => $customer->id_number,
                     'remarks' => $customer->remarks,
-                    'plan_id' => $customer->internet_package_id,
-                    'plan_name' => $customer->internetPackage?->name,
+                    'plan_id' => $customer->plan_id,
+                    'plan_name' => $customer->plan?->name,
                     'status' => $customer->status,
                     'payment_type' => $customer->payment_type,
                     'due_date' => $customer->due_date,
@@ -34,6 +49,7 @@ class CustomerController extends Controller
                     'created_at' => $customer->created_at->format('Y-m-d'),
                     'coverage_id' => $customer->coverage_id,
                     'coverage_name' => $customer->coverage?->name,
+                    'activation_date' => $customer->activation_date->format('Y-m-d'),
                 ];
             }),
             'plans' => InternetPackage::where('status', 'active')->get()->map(function ($plan) {
@@ -49,6 +65,10 @@ class CustomerController extends Controller
                     'name' => $coverage->name,
                 ];
             }),
+            'flash' => [
+                'success' => session('success'),
+                'error' => session('error'),
+            ],
         ]);
     }
 
@@ -56,8 +76,8 @@ class CustomerController extends Controller
     {
         $validated = $request->validate([
             'name' => 'required|string|max:255',
-            'email' => 'required|email|max:255|unique:customers',
-            'phone' => 'required|string|max:20',
+            'email' => 'required|email|max:255|unique:customers,email',
+            'phone' => 'required|string|max:255',
             'address' => 'required|string',
             'customer_type' => 'required|in:public,corporate,government',
             'id_card_type' => 'required|in:umid,sss,sim,passport,pag-ibig',
@@ -69,24 +89,27 @@ class CustomerController extends Controller
             'due_date' => 'required_if:payment_type,postpaid|nullable|integer|min:1|max:31',
             'is_tax_active' => 'required|boolean',
             'coverage_id' => 'required|exists:coverages,id',
+            'activation_date' => 'required|date',
         ]);
 
-        Customer::create([
-            'name' => $validated['name'],
-            'email' => $validated['email'],
-            'phone' => $validated['phone'],
-            'address' => $validated['address'],
-            'customer_type' => $validated['customer_type'],
-            'id_card_type' => $validated['id_card_type'],
-            'id_number' => $validated['id_number'],
-            'remarks' => $validated['remarks'],
-            'internet_package_id' => $validated['plan_id'],
-            'status' => $validated['status'],
-            'payment_type' => $validated['payment_type'],
-            'due_date' => $validated['due_date'],
-            'is_tax_active' => $validated['is_tax_active'],
-            'coverage_id' => $validated['coverage_id'],
-        ]);
+        // Generate account number (ACC-YYYYMM-XXXX)
+        $latestCustomer = Customer::whereYear('created_at', now()->year)
+            ->whereMonth('created_at', now()->month)
+            ->latest()
+            ->first();
+
+        $sequence = $latestCustomer 
+            ? (int)substr($latestCustomer->account_no, -4) + 1 
+            : 1;
+
+        $accountNo = sprintf(
+            'ACC-%s%s-%04d',
+            now()->format('Y'),
+            now()->format('m'),
+            $sequence
+        );
+
+        $customer = Customer::create($validated);
 
         return redirect()->back();
     }
@@ -95,8 +118,8 @@ class CustomerController extends Controller
     {
         $validated = $request->validate([
             'name' => 'required|string|max:255',
-            'email' => 'required|email|max:255|unique:customers,email,' . $customer->id,
-            'phone' => 'required|string|max:20',
+            'email' => 'required|email|max:255',
+            'phone' => 'required|string|max:255',
             'address' => 'required|string',
             'customer_type' => 'required|in:public,corporate,government',
             'id_card_type' => 'required|in:umid,sss,sim,passport,pag-ibig',
@@ -108,24 +131,10 @@ class CustomerController extends Controller
             'due_date' => 'required_if:payment_type,postpaid|nullable|integer|min:1|max:31',
             'is_tax_active' => 'required|boolean',
             'coverage_id' => 'required|exists:coverages,id',
+            'activation_date' => 'required|date',
         ]);
 
-        $customer->update([
-            'name' => $validated['name'],
-            'email' => $validated['email'],
-            'phone' => $validated['phone'],
-            'address' => $validated['address'],
-            'customer_type' => $validated['customer_type'],
-            'id_card_type' => $validated['id_card_type'],
-            'id_number' => $validated['id_number'],
-            'remarks' => $validated['remarks'],
-            'internet_package_id' => $validated['plan_id'],
-            'status' => $validated['status'],
-            'payment_type' => $validated['payment_type'],
-            'due_date' => $validated['due_date'],
-            'is_tax_active' => $validated['is_tax_active'],
-            'coverage_id' => $validated['coverage_id'],
-        ]);
+        $customer->update($validated);
 
         return redirect()->back();
     }

@@ -3,17 +3,29 @@
 namespace App\Http\Controllers;
 
 use App\Models\InternetPackage;
+use App\Services\MikrotikService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use Inertia\Inertia;
+use Illuminate\Support\Facades\Log;
 
 class InternetPackageController extends Controller
 {
     public function index()
     {
         $packages = InternetPackage::latest()->get();
+
+        try {
+            $mikrotikService = new MikrotikService();
+            $mikrotikProfiles = $mikrotikService->getMikrotikPppoeProfiles();
+        } catch (\Exception $e) {
+            Log::error("Failed to fetch MikroTik profiles: {$e->getMessage()}");
+            $mikrotikProfiles = []; // Return empty array on error
+        }
+
         return Inertia::render('plans/index', [
-            'packages' => $packages
+            'packages' => $packages,
+            'mikrotikProfiles' => $mikrotikProfiles,
         ]);
     }
 
@@ -25,6 +37,7 @@ class InternetPackageController extends Controller
             'category' => 'required|in:fiber,wireless',
             'status' => 'required|in:active,inactive',
             'remarks' => 'nullable|string',
+            'mikrotik_profile' => 'nullable|string|max:255',
             'image' => 'nullable|image|max:2048', // Max 2MB
         ]);
 
@@ -46,6 +59,7 @@ class InternetPackageController extends Controller
             'category' => 'required|in:fiber,wireless',
             'status' => 'required|in:active,inactive',
             'remarks' => 'nullable|string',
+            'mikrotik_profile' => 'nullable|string|max:255',
             'image' => 'nullable|image|max:2048', // Max 2MB
         ]);
 
