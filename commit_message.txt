@@ -1,0 +1,9 @@
+feat: Implement multiple Mikrotik PPPoE servers per area code and align UI design
+
+This commit introduces the ability to associate Mikrotik PPPoE servers with specific coverage areas and aligns the UI design with existing customer and internet plan pages.
+
+Changes include:
+- Database migration to replace `area_code` with `coverage_id` in `mikrotik_servers` table.
+- Updated `MikrotikServer` and `Coverage` models to define `belongsTo` and `hasMany` relationships.
+- Modified `MikrotikServerController` to handle `coverage_id` for CRUD operations and eager load `coverage` data.
+- Updated frontend components (`create.tsx`, `edit.tsx`, `index.tsx`) to use a dropdown for selecting coverage areas and display the coverage area name, and to align with the design patterns of other pages.

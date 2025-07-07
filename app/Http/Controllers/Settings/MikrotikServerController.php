@@ -17,6 +17,7 @@ class MikrotikServerController extends Controller
     {
         return Inertia::render('settings/mikrotik-servers/index', [
             'mikrotikServers' => MikrotikServer::with('coverage')->get(),
+            'coverages' => Coverage::all(),
         ]);
     }
 
@@ -37,13 +38,17 @@ class MikrotikServerController extends Controller
     {
         $request->validate([
             'name' => 'required|string|max:255',
-            'ip_address' => 'required|ip',
+            'host' => 'required|string|max:255',
+            'username' => 'nullable|string|max:255',
+            'password' => 'nullable|string|max:255',
+            'port' => 'nullable|integer|min:1|max:65535',
+            'is_active' => 'boolean',
             'coverage_id' => 'required|exists:coverages,id',
         ]);
 
         MikrotikServer::create($request->all());
 
-        return redirect()->route('mikrotik-servers.index');
+        return redirect()->route('mikrotik-servers.index')->with('success', 'Server added successfully.');
     }
 
     /**
@@ -72,13 +77,17 @@ class MikrotikServerController extends Controller
     {
         $request->validate([
             'name' => 'required|string|max:255',
-            'ip_address' => 'required|ip',
+            'host' => 'required|string|max:255',
+            'username' => 'nullable|string|max:255',
+            'password' => 'nullable|string|max:255',
+            'port' => 'nullable|integer|min:1|max:65535',
+            'is_active' => 'boolean',
             'coverage_id' => 'required|exists:coverages,id',
         ]);
 
         $mikrotikServer->update($request->all());
 
-        return redirect()->route('mikrotik-servers.index');
+        return redirect()->route('mikrotik-servers.index')->with('success', 'Server updated successfully.');
     }
 
     /**
@@ -88,6 +97,6 @@ class MikrotikServerController extends Controller
     {
         $mikrotikServer->delete();
 
-        return redirect()->route('mikrotik-servers.index');
+        return redirect()->route('mikrotik-servers.index')->with('success', 'Server deleted successfully.');
     }
 }

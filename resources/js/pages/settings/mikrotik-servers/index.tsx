@@ -9,6 +9,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Pencil, Trash2, AlertTriangle, CheckCircle } from 'lucide-react';
 import { useState, useEffect } from 'react';
+import { Checkbox } from '@/components/ui/checkbox';
 
 interface Coverage {
     id: number;
@@ -18,7 +19,11 @@ interface Coverage {
 interface MikrotikServer {
     id: number;
     name: string;
-    ip_address: string;
+    host: string;
+    username: string;
+    password: string;
+    port: number;
+    is_active: boolean;
     coverage_id: number;
     coverage: Coverage;
 }
@@ -30,9 +35,12 @@ interface FlashMessage {
 
 type FormData = {
     name: string;
-    ip_address: string;
+    host: string;
+    username: string;
+    password: string;
+    port: number;
+    is_active: boolean;
     coverage_id: number;
-    [key: string]: string | number;
 }
 
 const breadcrumbs: BreadcrumbItem[] = [
@@ -65,7 +73,11 @@ export default function MikrotikServers({ mikrotikServers = [], coverages = [], 
 
     const { data, setData, post, put, processing, reset, errors } = useForm<FormData>({
         name: '',
-        ip_address: '',
+        host: '',
+        username: '',
+        password: '',
+        port: 8728,
+        is_active: true,
         coverage_id: 0,
     });
 
@@ -93,9 +105,13 @@ export default function MikrotikServers({ mikrotikServers = [], coverages = [], 
         setEditingServer(server);
         setData({
             name: server.name,
-            ip_address: server.ip_address,
+            host: server.host,
+            username: server.username || '',
+            password: server.password || '',
+            port: server.port,
+            is_active: server.is_active,
             coverage_id: server.coverage_id,
-        } as FormData);
+        });
         setIsAddDialogOpen(true);
     };
 
@@ -148,33 +164,78 @@ export default function MikrotikServers({ mikrotikServers = [], coverages = [], 
                                         {errors.name && <p className="text-sm text-red-500 mt-1">{errors.name}</p>}
                                     </div>
                                     <div>
-                                        <Label htmlFor="ip_address">IP Address</Label>
+                                        <Label htmlFor="host">Host</Label>
                                         <Input
-                                            id="ip_address"
-                                            value={data.ip_address}
-                                            onChange={e => setData('ip_address', e.target.value)}
+                                            id="host"
+                                            value={data.host}
+                                            onChange={e => setData('host', e.target.value)}
+                                            placeholder="IP address or hostname"
                                         />
-                                        {errors.ip_address && <p className="text-sm text-red-500 mt-1">{errors.ip_address}</p>}
+                                        {errors.host && <p className="text-sm text-red-500 mt-1">{errors.host}</p>}
                                     </div>
                                 </div>
-                                <div>
-                                    <Label htmlFor="coverage_id">Coverage Area</Label>
-                                    <Select
-                                        value={data.coverage_id.toString()}
-                                        onValueChange={value => setData('coverage_id', parseInt(value))}
-                                    >
-                                        <SelectTrigger>
-                                            <SelectValue placeholder="Select a coverage area" />
-                                        </SelectTrigger>
-                                        <SelectContent>
-                                            {coverages.map(coverage => (
-                                                <SelectItem key={coverage.id} value={coverage.id.toString()}>
-                                                    {coverage.name}
-                                                </SelectItem>
-                                            ))}
-                                        </SelectContent>
-                                    </Select>
-                                    {errors.coverage_id && <p className="text-sm text-red-500 mt-1">{errors.coverage_id}</p>}
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div>
+                                        <Label htmlFor="username">Username</Label>
+                                        <Input
+                                            id="username"
+                                            value={data.username}
+                                            onChange={e => setData('username', e.target.value)}
+                                        />
+                                        {errors.username && <p className="text-sm text-red-500 mt-1">{errors.username}</p>}
+                                    </div>
+                                    <div>
+                                        <Label htmlFor="password">Password</Label>
+                                        <Input
+                                            id="password"
+                                            type="password"
+                                            value={data.password}
+                                            onChange={e => setData('password', e.target.value)}
+                                        />
+                                        {errors.password && <p className="text-sm text-red-500 mt-1">{errors.password}</p>}
+                                    </div>
+                                </div>
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div>
+                                        <Label htmlFor="port">Port</Label>
+                                        <Input
+                                            id="port"
+                                            type="number"
+                                            value={data.port}
+                                            onChange={e => setData('port', parseInt(e.target.value))}
+                                        />
+                                        {errors.port && <p className="text-sm text-red-500 mt-1">{errors.port}</p>}
+                                    </div>
+                                    <div>
+                                        <Label htmlFor="coverage_id">Coverage Area</Label>
+                                        <Select
+                                            value={data.coverage_id.toString()}
+                                            onValueChange={value => setData('coverage_id', parseInt(value))}
+                                        >
+                                            <SelectTrigger>
+                                                <SelectValue placeholder="Select a coverage area" />
+                                            </SelectTrigger>
+                                            <SelectContent>
+                                                {coverages.map(coverage => (
+                                                    <SelectItem key={coverage.id} value={coverage.id.toString()}>
+                                                        {coverage.name}
+                                                    </SelectItem>
+                                                ))}
+                                            </SelectContent>
+                                        </Select>
+                                        {errors.coverage_id && <p className="text-sm text-red-500 mt-1">{errors.coverage_id}</p>}
+                                    </div>
+                                </div>
+                                <div className="flex items-center space-x-2">
+                                    <Checkbox
+                                        id="is_active"
+                                        checked={data.is_active}
+                                        onCheckedChange={(checked: boolean | 'indeterminate') => {
+                                            if (checked === 'indeterminate') return;
+                                            setData('is_active', checked);
+                                        }}
+                                    />
+                                    <Label htmlFor="is_active">Active</Label>
                                 </div>
 
                                 <div className="flex justify-end gap-2">
@@ -265,7 +326,7 @@ export default function MikrotikServers({ mikrotikServers = [], coverages = [], 
                                             {mikrotikServers.map((server) => (
                                                 <tr key={server.id} className="border-b">
                                                     <td className="py-3 px-4">{server.name}</td>
-                                                    <td className="py-3 px-4">{server.ip_address}</td>
+                                                    <td className="py-3 px-4">{server.host}</td>
                                                     <td className="py-3 px-4">{server.coverage.name}</td>
                                                     <td className="py-3 px-4 text-right">
                                                         <div className="flex justify-end gap-2">

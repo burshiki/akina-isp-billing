@@ -4,6 +4,8 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 
 class MikrotikServer extends Model
 {
@@ -11,12 +13,27 @@ class MikrotikServer extends Model
 
     protected $fillable = [
         'name',
-        'ip_address',
+        'host',
+        'username',
+        'password',
+        'port',
+        'is_active',
         'coverage_id',
     ];
 
-    public function coverage()
+    protected $casts = [
+        'is_active' => 'boolean',
+    ];
+
+    public function coverage(): BelongsTo
     {
         return $this->belongsTo(Coverage::class);
+    }
+
+    public function coverages(): BelongsToMany
+    {
+        return $this->belongsToMany(Coverage::class, 'coverage_mikrotik_integrations')
+            ->withPivot('description', 'is_active')
+            ->withTimestamps();
     }
 }

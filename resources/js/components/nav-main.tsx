@@ -1,7 +1,8 @@
 import { Link } from '@inertiajs/react'
 import { usePage } from '@inertiajs/react'
 import { SidebarGroup, SidebarMenu, SidebarMenuButton, SidebarMenuItem } from '@/components/ui/sidebar'
-import { LayoutDashboard, Users, Package, MapPin, Receipt } from 'lucide-react'
+import { LayoutDashboard, Users, Package, MapPin, Receipt, Server, GitMerge } from 'lucide-react'
+import { Icon } from './icon'
 
 export function NavMain() {
   const page = usePage()
@@ -50,6 +51,24 @@ export function NavMain() {
             <Link href="/billing" prefetch>
               <Receipt className="h-4 w-4" />
               <span>Billing</span>
+            </Link>
+          </SidebarMenuButton>
+        </SidebarMenuItem>
+
+        <SidebarMenuItem>
+          <SidebarMenuButton asChild isActive={page.url === '/settings/mikrotik-servers'}>
+            <Link href="/settings/mikrotik-servers" prefetch>
+              <Server className="h-4 w-4" />
+              <span>Mikrotik Servers</span>
+            </Link>
+          </SidebarMenuButton>
+        </SidebarMenuItem>
+
+        <SidebarMenuItem>
+          <SidebarMenuButton asChild isActive={page.url === '/integrations'}>
+            <Link href="/integrations" prefetch>
+              <GitMerge className="h-4 w-4" />
+              <span>Integrations</span>
             </Link>
           </SidebarMenuButton>
         </SidebarMenuItem>

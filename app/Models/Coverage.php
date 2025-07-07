@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 
 class Coverage extends Model
 {
@@ -26,9 +27,11 @@ class Coverage extends Model
         return $this->hasMany(Customer::class);
     }
 
-    public function mikrotikServers(): HasMany
+    public function mikrotikServers(): BelongsToMany
     {
-        return $this->hasMany(MikrotikServer::class);
+        return $this->belongsToMany(MikrotikServer::class, 'coverage_mikrotik_integrations')
+            ->withPivot('description', 'is_active')
+            ->withTimestamps();
     }
 
     public function getTotalCustomersAttribute(): int
