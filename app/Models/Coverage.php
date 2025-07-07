@@ -26,6 +26,11 @@ class Coverage extends Model
         return $this->hasMany(Customer::class);
     }
 
+    public function mikrotikServers(): HasMany
+    {
+        return $this->hasMany(MikrotikServer::class);
+    }
+
     public function getTotalCustomersAttribute(): int
     {
         return $this->customers()->count();
